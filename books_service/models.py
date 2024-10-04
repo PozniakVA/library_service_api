@@ -15,6 +15,7 @@ class Book(models.Model):
         blank=True
     )
     cover = models.CharField(
+        max_length=100,
         choices=Cover.choices,
         null=True,
         blank=True
@@ -25,6 +26,7 @@ class Book(models.Model):
         blank=True
     )
     daily_fee = models.DecimalField(
+        max_digits=5,
         decimal_places=2,
         null=True,
     )
