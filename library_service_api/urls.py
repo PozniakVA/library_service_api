@@ -21,7 +21,7 @@ from django.urls import path, include
 urlpatterns = [
     path("admin/", admin.site.urls),
     path(
-        "api/books",
+        "api/",
         include("books_service.urls"),
         name="books_service"
     ),
