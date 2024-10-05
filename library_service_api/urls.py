@@ -21,8 +21,13 @@ from django.urls import path, include
 urlpatterns = [
     path("admin/", admin.site.urls),
     path(
-        "api/",
+        "api/books",
         include("books_service.urls"),
         name="books_service"
+    ),
+    path(
+        "api/users/",
+        include("users_service.urls"),
+        name="users_service"
     )
 ]

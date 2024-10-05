@@ -1,12 +1,10 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from users_service.models import User
-
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = get_user_model()
         fields = [
             "id",
             "email",
@@ -24,12 +22,10 @@ class UserSerializer(serializers.ModelSerializer):
             },
         }
 
-        def create(self, validated_data):
-            return get_user_model().objects.create_user(
-                **validated_data
-            )
+    def create(self, validated_data):
+            return get_user_model().objects.create_user(**validated_data)
 
-        def update(self, instance, validated_data):
+    def update(self, instance, validated_data):
             password = validated_data.pop("password", None)
             user = super().update(instance, validated_data)
             if password:
