@@ -29,7 +29,12 @@ class UserAdmin(UserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "usable_password", "password1", "password2"),
+                "fields": (
+                    "email",
+                    "usable_password",
+                    "password1",
+                    "password2"
+                ),
             },
         ),
     )
@@ -37,5 +42,3 @@ class UserAdmin(UserAdmin):
     list_display = ("email", "first_name", "last_name", "is_staff")
     search_fields = ("email", "first_name", "last_name")
     ordering = ("email",)
-
-

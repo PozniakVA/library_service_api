@@ -15,4 +15,4 @@ urlpatterns = [
     path("token-verify/", TokenVerifyView.as_view(), name="token_verify"),
 ]
 
-app_name="users_service"
+app_name = "users_service"
