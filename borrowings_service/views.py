@@ -60,6 +60,22 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+    def get_queryset(self):
+        queryset = self.queryset
+        is_active = self.request.query_params.get("is_active")
+        user_id = self.request.query_params.get("user_id")
+
+        option = {"True": True, "False": False}
+        if is_active in option:
+            queryset = queryset.filter(actual_return_date__isnull=option[is_active])
+
+        if user_id and self.request.user.is_staff:
+            queryset = queryset.filter(user__id=int(user_id))
+
+        return queryset.order_by("expected_return_date")
+
+
+
     @action(detail=True, methods=["post"], url_path="return")
     def borrowings_return(self, request, pk=None):
         borrowing = self.get_object()
