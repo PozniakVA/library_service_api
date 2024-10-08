@@ -50,7 +50,11 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
             book.inventory -= 1
             book.save()
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+            return Response(
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers
+            )
 
         return Response(
             {"detail": "The copies of this book are not available."},
@@ -67,14 +71,14 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
 
         option = {"True": True, "False": False}
         if is_active in option:
-            queryset = queryset.filter(actual_return_date__isnull=option[is_active])
+            queryset = queryset.filter(
+                actual_return_date__isnull=option[is_active]
+            )
 
         if user_id and self.request.user.is_staff:
             queryset = queryset.filter(user__id=int(user_id))
 
         return queryset.order_by("expected_return_date")
-
-
 
     @action(detail=True, methods=["post"], url_path="return")
     def borrowings_return(self, request, pk=None):
@@ -93,4 +97,3 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
             {"message": "Book already returned!"},
             status=status.HTTP_400_BAD_REQUEST
         )
-

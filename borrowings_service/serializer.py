@@ -33,6 +33,7 @@ class BorrowingsListSerializer(BorrowingsSerializer):
         slug_field="email",
         read_only=True
     )
+
     class Meta(BorrowingsSerializer.Meta):
         fields = [
             "id",
