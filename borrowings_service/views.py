@@ -1,6 +1,7 @@
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from books_service.models import Book
@@ -16,6 +17,7 @@ from borrowings_service.serializer import (
 
 class BorrowingsViewSet(viewsets.ModelViewSet):
     queryset = Borrowings.objects.all()
+    permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
         if self.action == "list":
