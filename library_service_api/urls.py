@@ -29,5 +29,10 @@ urlpatterns = [
         "api/users/",
         include("users_service.urls"),
         name="users_service"
+    ),
+    path(
+        "api/borrowings/",
+        include("borrowings_service.urls"),
+        name="borrowings_service"
     )
 ]
