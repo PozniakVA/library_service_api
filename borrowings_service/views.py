@@ -16,7 +16,7 @@ from borrowings_service.serializer import (
 
 
 class BorrowingsViewSet(viewsets.ModelViewSet):
-    queryset = Borrowings.objects.all()
+    queryset = Borrowings.objects.select_related()
     permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
