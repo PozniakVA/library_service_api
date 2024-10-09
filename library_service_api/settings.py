@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "books_service",
     "users_service",
     "borrowings_service",
+    "notifications_service",
     "rest_framework",
     "rest_framework_simplejwt",
     "debug_toolbar",
