@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -11,13 +13,21 @@ from borrowings_service.serializer import (
     BorrowingsDetailSerializer,
     BorrowingsListSerializer,
     BorrowingsCreateSerializer,
-    BorrowingsReturnSerializer
+    BorrowingsReturnSerializer,
+)
+from notifications_service.tasks import (
+    send_borrowing_success,
+    send_return_borrowing_success,
+    reminder_to_return_the_book,
+    reminder_to_return_the_book_in_one_day,
 )
 
 
 class BorrowingsViewSet(viewsets.ModelViewSet):
     queryset = Borrowings.objects.select_related()
     permission_classes = [IsAuthenticated]
+
+    reminders = []
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -31,13 +41,11 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
         return BorrowingsSerializer
 
     def create(self, request, *args, **kwargs):
-
         try:
             book = Book.objects.get(id=request.data["book"])
         except Book.DoesNotExist:
             return Response(
-                {"detail": "Book not found."},
-                status=status.HTTP_404_NOT_FOUND
+                {"detail": "Book not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = self.get_serializer(data=request.data)
@@ -49,6 +57,26 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
         if book.inventory > 0:
             book.inventory -= 1
             book.save()
+
+            send_borrowing_success.delay(self.request.user.id, book.title)
+
+            expected_date = serializer.validated_data["expected_return_date"]
+            before_expected_date = expected_date - timedelta(days=1)
+            if before_expected_date >= timezone.now():
+                reminder_in_advance = (
+                    reminder_to_return_the_book_in_one_day.apply_async(
+                        (self.request.user.id, book.title),
+                        eta=before_expected_date,
+                    )
+                )
+                self.reminders.append(reminder_in_advance)
+
+            reminder_at_the_end = reminder_to_return_the_book.apply_async(
+                (self.request.user.id, book.title),
+                eta=expected_date,
+            )
+
+            self.reminders.append(reminder_at_the_end)
 
             return Response(
                 serializer.data,
@@ -89,6 +117,15 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
             borrowing.actual_return_date = timezone.now()
             borrowing.book.inventory += 1
             borrowing.save()
+
+            for reminder in self.reminders:
+                reminder.revoke()
+
+            send_return_borrowing_success.delay(
+                request.user.id,
+                borrowing.book.title
+            )
+
             return Response(
                 {"detail": "Book returned successfully!"},
                 status=status.HTTP_200_OK
