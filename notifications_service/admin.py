@@ -1,3 +1,8 @@
 from django.contrib import admin
 
-# Register your models here.
+from notifications_service.models import Chat
+
+
+@admin.register(Chat)
+class BorrowingsAdmin(admin.ModelAdmin):
+    pass
