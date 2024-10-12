@@ -7,4 +7,4 @@ router.register("books", BookViewSet)
 
 urlpatterns = router.urls
 
-app_name="books_service"
+app_name = "books_service"

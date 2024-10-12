@@ -5,15 +5,9 @@ from books_service.models import Book
 
 
 class Borrowings(models.Model):
-    borrow_date = models.DateTimeField(
-        auto_now_add=True,
-        editable=False
-    )
+    borrow_date = models.DateTimeField(auto_now_add=True, editable=False)
     expected_return_date = models.DateTimeField()
-    actual_return_date = models.DateTimeField(
-        null=True,
-        editable=False
-    )
+    actual_return_date = models.DateTimeField(null=True, editable=False)
     book = models.ForeignKey(
         Book,
         related_name="borrowings",

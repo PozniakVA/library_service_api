@@ -14,25 +14,14 @@ class BorrowingsSerializer(serializers.ModelSerializer):
             "expected_return_date",
             "actual_return_date",
             "book",
-            "user"
-        ]
-        read_only_fields = [
-            "id",
             "user",
-            "borrow_date",
-            "actual_return_date"
         ]
+        read_only_fields = ["id", "user", "borrow_date", "actual_return_date"]
 
 
 class BorrowingsListSerializer(BorrowingsSerializer):
-    book = serializers.SlugRelatedField(
-        slug_field="title",
-        read_only=True
-    )
-    user = serializers.SlugRelatedField(
-        slug_field="email",
-        read_only=True
-    )
+    book = serializers.SlugRelatedField(slug_field="title", read_only=True)
+    user = serializers.SlugRelatedField(slug_field="email", read_only=True)
 
     class Meta(BorrowingsSerializer.Meta):
         fields = [
@@ -41,7 +30,7 @@ class BorrowingsListSerializer(BorrowingsSerializer):
             "expected_return_date",
             "actual_return_date",
             "book",
-            "user"
+            "user",
         ]
 
 
@@ -53,10 +42,7 @@ class BorrowingsDetailSerializer(BorrowingsSerializer):
 class BorrowingsCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Borrowings
-        fields = [
-            "expected_return_date",
-            "book"
-        ]
+        fields = ["expected_return_date", "book"]
 
 
 class BorrowingsReturnSerializer(serializers.ModelSerializer):
