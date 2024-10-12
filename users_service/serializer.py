@@ -32,3 +32,10 @@ class UserSerializer(serializers.ModelSerializer):
             user.set_password(password)
             user.save()
         return user
+
+
+class UserMeSerializer(UserSerializer):
+
+    class Meta(UserSerializer.Meta):
+        fields = UserSerializer.Meta.fields + ["your_telegram_bot"]
+        read_only_fields = ["id", "is_staff", "your_telegram_bot"]
