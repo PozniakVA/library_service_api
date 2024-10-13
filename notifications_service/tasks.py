@@ -1,6 +1,8 @@
 from celery import shared_task
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
+from borrowings_service.models import Borrowings
 from notifications_service.bot_init import bot
 from notifications_service.models import Chat
 
@@ -14,7 +16,6 @@ def reminder_to_return_the_book_in_one_day(user, book_title):
         f" that you planned to return the {book_title} in 24 hours",
     )
 
-
 @shared_task
 def reminder_to_return_the_book(user, book_title):
     chat = Chat.objects.get(user=user)
@@ -24,7 +25,6 @@ def reminder_to_return_the_book(user, book_title):
         f" that you planned to return the {book_title} today",
     )
 
-
 @shared_task
 def send_borrowing_success(user, book_title):
     chat = Chat.objects.get(user=user)
@@ -33,7 +33,6 @@ def send_borrowing_success(user, book_title):
         f"The book 📚{book_title}📚 has been borrowed successfully!"
     )
 
-
 @shared_task
 def send_return_borrowing_success(user, book_title):
     chat = Chat.objects.get(user=user)
@@ -41,7 +40,6 @@ def send_return_borrowing_success(user, book_title):
         chat.chat_id,
         f"The book 📚{book_title}📚 has been returned successfully!"
     )
-
 
 @shared_task
 def connect_telegram_user_with_user_from_db(message):
@@ -59,7 +57,6 @@ using the link in your personal profile on the website.
 """,
         )
 
-
 @shared_task
 def send_welcome_message(message):
     bot.send_message(
@@ -73,3 +70,48 @@ Here’s how I can help:
 ⏰ Get alerts if your rental period has passed.
 """,
     )
+
+@shared_task
+def check_overdue_borrowing():
+    overdue_borrowings = Borrowings.objects.filter(
+        expected_return_date__lt=timezone.now(),
+        actual_return_date__isnull=True
+    )
+    return overdue_borrowings
+
+@shared_task
+def send_notification_about_overdue_to_users():
+    overdue_borrowings = check_overdue_borrowing()
+    if overdue_borrowings:
+        for borrowing in overdue_borrowings:
+            chat = Chat.objects.get(user=borrowing.user)
+            bot.send_message(
+                chat.chat_id,
+                f"Dear {chat.user.first_name}, the borrowing of your book '{borrowing.book.title}' is overdue"
+                f" as of {borrowing.expected_return_date}. Please don't forget to return the book."
+            )
+
+@shared_task
+def send_notification_about_overdue_to_admin():
+    overdue_borrowings = check_overdue_borrowing()
+
+    if overdue_borrowings:
+        message = ""
+        for borrowing in overdue_borrowings:
+            text = (
+                f"{borrowing.user.email} overdue the book {borrowing.book.title} "
+                f"(The expected return date was {borrowing.expected_return_date})\n"
+            )
+            message += text
+
+        message = message[:-1]
+
+    else:
+        message = "No borrowings overdue today!"
+
+    admin_chats = Chat.objects.filter(user__is_staff=True)
+    for admin_chat in admin_chats:
+        bot.send_message(
+            admin_chat.chat_id,
+            message
+        )
