@@ -119,6 +119,7 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
             borrowing.book.inventory += 1
             print(borrowing.book.inventory)
             borrowing.book.save()
+            borrowing.save()
 
             for reminder in self.reminders:
                 reminder.revoke()
