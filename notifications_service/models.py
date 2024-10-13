@@ -1,10 +1,11 @@
-from django.contrib.auth import get_user_model
 from django.db import models
+
+from users_service.models import User
 
 
 class Chat(models.Model):
     user = models.ForeignKey(
-        get_user_model(),
+        User,
         on_delete=models.CASCADE,
         related_name="chats",
     )
