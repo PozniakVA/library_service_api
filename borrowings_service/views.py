@@ -115,10 +115,9 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
         if not borrowing.actual_return_date:
 
             borrowing.actual_return_date = timezone.now()
-            print(borrowing.book.inventory)
             borrowing.book.inventory += 1
-            print(borrowing.book.inventory)
             borrowing.book.save()
+            borrowing.save()
 
             for reminder in self.reminders:
                 reminder.revoke()
