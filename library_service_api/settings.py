@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "users_service",
     "borrowings_service",
     "notifications_service",
+    "payments_service",
     "rest_framework",
     "rest_framework_simplejwt",
     "debug_toolbar",
