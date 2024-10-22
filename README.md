@@ -31,3 +31,10 @@ set PYTHONPATH=your_path
 
 python running_periodic_tasks.py
 ```
+## Test webhook
+If you want to test the webhook locally,
+you need to use ngrok. Ngrok allows you 
+to expose your local server via a public URL
+```
+https://ngrok.com/docs/getting-started/#step-1-install
+```
