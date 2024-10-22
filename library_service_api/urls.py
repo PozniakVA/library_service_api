@@ -28,5 +28,6 @@ urlpatterns = [
         include("borrowings_service.urls"),
         name="borrowings_service"
     ),
+    path("api/payments_service/", include("payments_service.urls")),
     path("__debug__/", include(debug_toolbar.urls)),
 ]

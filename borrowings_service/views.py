@@ -16,11 +16,12 @@ from borrowings_service.serializer import (
     BorrowingsReturnSerializer,
 )
 from notifications_service.tasks import (
-    send_borrowing_success,
     send_return_borrowing_success,
-    reminder_to_return_the_book,
+    send_borrowing_success,
     reminder_to_return_the_book_in_one_day,
+    reminder_to_return_the_book,
 )
+from payments_service.views import stripe_payment
 
 
 class BorrowingsViewSet(viewsets.ModelViewSet):
@@ -52,37 +53,34 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
         self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
+
+        borrowing = serializer.instance
 
         if book.inventory > 0:
             book.inventory -= 1
             book.save()
 
-            send_borrowing_success.delay(self.request.user.id, book.title)
+            send_borrowing_success.delay(request.user.id, borrowing.book.title)
 
-            expected_date = serializer.validated_data["expected_return_date"]
+            expected_date = borrowing.expected_return_date
             before_expected_date = expected_date - timedelta(days=1)
             if before_expected_date >= timezone.now():
                 reminder_in_advance = (
                     reminder_to_return_the_book_in_one_day.apply_async(
-                        (self.request.user.id, book.title),
+                        (request.user.id, borrowing.book.title),
                         eta=before_expected_date,
                     )
                 )
                 self.reminders.append(reminder_in_advance)
 
             reminder_at_the_end = reminder_to_return_the_book.apply_async(
-                (self.request.user.id, book.title),
+                (request.user.id, borrowing.book.title),
                 eta=expected_date,
             )
 
             self.reminders.append(reminder_at_the_end)
 
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED,
-                headers=headers
-            )
+            return stripe_payment(request, serializer.instance)
 
         return Response(
             {"detail": "The copies of this book are not available."},

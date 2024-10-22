@@ -115,3 +115,19 @@ def send_notification_about_overdue_to_admin():
             admin_chat.chat_id,
             message
         )
+
+@shared_task
+def send_notification_about_successful_payment(chat_id):
+    chat = Chat.objects.get(user=chat_id)
+    bot.send_message(
+        chat.chat_id,
+        "The payment was successful"
+    )
+
+@shared_task
+def send_notification_about_expired_payment(chat_id):
+    chat = Chat.objects.get(user=chat_id)
+    bot.send_message(
+        chat.chat_id,
+        "The payment expired"
+    )
