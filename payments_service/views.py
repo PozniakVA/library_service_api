@@ -23,6 +23,7 @@ from payments_service.serializer import (
     PaymentSerializer,
     PaymentListSerializer,
 )
+from users_service.models import User
 
 
 class PaymentsViewSet(
@@ -42,6 +43,7 @@ class PaymentsViewSet(
 
 def calculate_total_price(borrowing):
     SECONDS_IN_ONE_DAY = 86400
+
     borrowing_seconds = (
         borrowing.expected_return_date - borrowing.borrow_date
     ).total_seconds()
@@ -51,12 +53,43 @@ def calculate_total_price(borrowing):
     daily_fee = Decimal(borrowing.book.daily_fee)
 
     total_price = round((daily_fee * borrowing_days), 2)
+    if total_price < 1:
+        total_price = 1
+
     return float(total_price)
 
 
-def stripe_payment(request, borrowing):
+def calculate_fine(borrowing):
+    FINE_MULTIPLIER = 1.6
+    SECONDS_IN_ONE_DAY = 86400
+
+    overdue_time_in_seconds = (
+            borrowing.actual_return_date - borrowing.expected_return_date
+    ).total_seconds()
+    overdue_days = overdue_time_in_seconds / SECONDS_IN_ONE_DAY
+
+    overdue_days = Decimal(overdue_days)
+    daily_fee = Decimal(borrowing.book.daily_fee)
+    FINE_MULTIPLIER = Decimal(FINE_MULTIPLIER)
+
+    total_fine = round((daily_fee * overdue_days * FINE_MULTIPLIER), 2)
+    if total_fine < 1:
+        total_fine = 1
+
+    return float(total_fine)
+
+
+def stripe_payment(request, borrowing_id):
     stripe.api_key = settings.STRIPE_SECRET_KEY
-    total_price = calculate_total_price(borrowing)
+
+    borrowing = Borrowings.objects.get(id=borrowing_id)
+
+    if request.GET.get("fine"):
+        type_payment = "FINE"
+        total_price = calculate_fine(borrowing)
+    else:
+        type_payment = "PAYMENT"
+        total_price = calculate_total_price(borrowing)
 
     checkout_session = stripe.checkout.Session.create(
         line_items=[
@@ -79,6 +112,7 @@ def stripe_payment(request, borrowing):
         ),
         metadata={
             "borrowing_id": borrowing.id,
+            "type_payment": type_payment,
             "email": borrowing.user.email,
             "first_name": borrowing.user.first_name,
             "last_name": borrowing.user.last_name,
@@ -90,7 +124,7 @@ def stripe_payment(request, borrowing):
         session_id=checkout_session.id,
         session_url=checkout_session.url,
         status="PENDING",
-        type="PAYMENT",
+        type=type_payment,
         total_price=total_price,
     )
     return redirect(checkout_session.url, code=303)
@@ -117,9 +151,14 @@ def my_webhook_view(request):
 
     if event.type == "checkout.session.completed":
         borrowing_id = int(session.metadata.get("borrowing_id"))
-        borrowing = Borrowings.objects.get(id=borrowing_id)
+        type_payment = session.metadata.get("type_payment")
 
-        payment = Payments.objects.get(borrowing__id=borrowing_id)
+        borrowing = Borrowings.objects.get(id=borrowing_id)
+        payment = Payments.objects.get(
+            borrowing__id=borrowing_id,
+            type=type_payment
+        )
+
         payment.status = "PAID"
         payment.save()
 
@@ -135,11 +174,11 @@ def my_webhook_view(request):
         )
 
     if event.type == "checkout.session.expired":
-        borrowing_id = int(session.metadata.get("borrowing_id"))
-        borrowing = Borrowings.objects.get(id=borrowing_id)
+        email = session.metadata.get("email")
+        user = User.objects.get(email=email)
 
         try:
-            chat = Chat.objects.get(user=borrowing.user)
+            chat = Chat.objects.get(user=user)
             send_notification_about_expired_payment.delay(chat.id)
         except Chat.DoesNotExist:
             pass

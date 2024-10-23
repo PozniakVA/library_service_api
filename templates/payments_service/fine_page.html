@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fine</title>
+</head>
+<body>
+  <h1>Fine</h1>
+  <h4>Due to the overdue borrowing, you are required to pay a fine</h4>
+  
+<form action="{% url 'payments_service:stripe_payment' context.id %}?fine=True" method="POST">
+    {% csrf_token %}
+    <button type="submit">Pay Fine</button>
+</form>
+
+
+</body>
+</html>

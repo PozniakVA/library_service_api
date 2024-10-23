@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.shortcuts import render
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -80,7 +81,7 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
 
             self.reminders.append(reminder_at_the_end)
 
-            return stripe_payment(request, serializer.instance)
+            return stripe_payment(request, serializer.instance.id)
 
         return Response(
             {"detail": "The copies of this book are not available."},
@@ -124,6 +125,13 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
                 request.user.id,
                 borrowing.book.title
             )
+
+            if borrowing.actual_return_date > borrowing.expected_return_date:
+                return render(
+                    request,
+                    "payments_service/fine_page.html",
+                    context={"context": borrowing}
+                )
 
             return Response(
                 {"detail": "Book returned successfully!"},

@@ -11,6 +11,11 @@ urlpatterns = [
     path("webhook/", views.my_webhook_view, name="stripe-webhook"),
     path("successful_page/", views.successful_page, name="successful_page"),
     path("canceled_page/", views.canceled_page, name="canceled_page"),
+    path(
+        "stripe_payment/<int:borrowing_id>/",
+        views.stripe_payment,
+        name="stripe_payment"
+    ),
 ]
 
 app_name = "payments_service"
