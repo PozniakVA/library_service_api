@@ -1,6 +1,7 @@
 from django.db import models
 
 from borrowings_service.models import Borrowings
+from users_service.models import User
 
 
 class Payments(models.Model):
@@ -16,6 +17,11 @@ class Payments(models.Model):
     borrowing = models.ForeignKey(
         Borrowings, on_delete=models.CASCADE, related_name="payments"
     )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="payments"
+    )
     session_id = models.CharField(max_length=400)
     session_url = models.URLField()
     status = models.CharField(
@@ -26,7 +32,7 @@ class Payments(models.Model):
         choices=Type.choices,
         default=Type.PAYMENT
     )
-    crated_at = models.DateTimeField(auto_now_add=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, editable=False)
     total_price = models.DecimalField(max_digits=8, decimal_places=2)
 
     def __str__(self) -> str:

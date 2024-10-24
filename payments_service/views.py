@@ -29,7 +29,7 @@ from users_service.models import User
 class PaymentsViewSet(
     mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
-    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
     GenericViewSet,
 ):
     permission_classes = [IsAdminUserOrIsAuthenticatedReadOnly]
@@ -116,6 +116,7 @@ def create_checkout_session(
         },
     )
     Payments.objects.create(
+        user=request.user,
         borrowing=borrowing,
         session_id=checkout_session.id,
         session_url=checkout_session.url,

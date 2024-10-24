@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from books_service.serializer import BookSerializer
 from borrowings_service.models import Borrowings
-from payments_service.serializer import PaymentListSerializer
+from payments_service.serializer import PaymentListSerializer, PaymentSerializerInBorrowings
 from users_service.serializer import UserSerializer
 
 
@@ -23,6 +23,7 @@ class BorrowingsSerializer(serializers.ModelSerializer):
 class BorrowingsListSerializer(BorrowingsSerializer):
     book = serializers.SlugRelatedField(slug_field="title", read_only=True)
     user = serializers.SlugRelatedField(slug_field="email", read_only=True)
+    payments = PaymentSerializerInBorrowings(many=True, read_only=True)
 
     class Meta(BorrowingsSerializer.Meta):
         fields = [
@@ -32,6 +33,7 @@ class BorrowingsListSerializer(BorrowingsSerializer):
             "actual_return_date",
             "book",
             "user",
+            "payments",
         ]
 
 
@@ -41,7 +43,7 @@ class BorrowingsDetailSerializer(BorrowingsSerializer):
     user = UserSerializer(read_only=True)
 
     class Meta(BorrowingsSerializer.Meta):
-        fields = BorrowingsSerializer.Meta.fields + ["payments"]
+        fields = BorrowingsSerializer.Meta.fields
 
 
 class BorrowingsCreateSerializer(serializers.ModelSerializer):
