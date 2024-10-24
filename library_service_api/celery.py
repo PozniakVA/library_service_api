@@ -1,6 +1,7 @@
 import os
 
 from celery import Celery
+from celery.schedules import crontab
 
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "library_service_api.settings")
@@ -20,3 +21,18 @@ app.autodiscover_tasks()
 @app.task(bind=True, ignore_result=True)
 def debug_task(self):
     print(f"Request: {self.request!r}")
+
+app.conf.beat_schedule = {
+    "Send notification about overdue to admin every minute": {
+        "task": "notifications_service.tasks.send_notification_about_overdue_to_admin",
+        "schedule": crontab(hour="12", minute="0"),
+    },
+    "Send notification about overdue to users every minute": {
+        "task": "notifications_service.tasks.send_notification_about_overdue_to_users",
+        "schedule": crontab(hour="12", minute="0"),
+    },
+    "Checking and marking stripe session as expired": {
+        "task": "notifications_service.tasks.checking_stripe_session_for_expiration",
+        "schedule": crontab(minute="*"),
+    },
+}

@@ -1,10 +1,13 @@
+import stripe
 from celery import shared_task
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from borrowings_service.models import Borrowings
+from library_service_api import settings
 from notifications_service.bot_init import bot
 from notifications_service.models import Chat
+from payments_service.models import Payments
 
 
 @shared_task
@@ -131,3 +134,16 @@ def send_notification_about_expired_payment(chat_id):
         chat.chat_id,
         "The payment expired"
     )
+
+@shared_task
+def checking_stripe_session_for_expiration():
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    expires = stripe.checkout.Session.list(status="expired")
+
+    for expire in expires:
+        try:
+            payment = Payments.objects.get(session_id=expire.id)
+            payment.status = "EXPIRED"
+            payment.save()
+        except Payments.DoesNotExist:
+            pass
