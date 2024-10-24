@@ -22,7 +22,7 @@ from notifications_service.tasks import (
     reminder_to_return_the_book_in_one_day,
     reminder_to_return_the_book,
 )
-from payments_service.views import stripe_payment
+from payments_service.views import pay_payment
 
 
 class BorrowingsViewSet(viewsets.ModelViewSet):
@@ -81,7 +81,7 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
 
             self.reminders.append(reminder_at_the_end)
 
-            return stripe_payment(request, serializer.instance.id)
+            return pay_payment(request, serializer.instance.id)
 
         return Response(
             {"detail": "The copies of this book are not available."},

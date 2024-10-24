@@ -79,17 +79,13 @@ def calculate_fine(borrowing):
     return float(total_fine)
 
 
-def stripe_payment(request, borrowing_id):
+def create_checkout_session(
+        request,
+        borrowing,
+        total_price,
+        type_payment
+):
     stripe.api_key = settings.STRIPE_SECRET_KEY
-
-    borrowing = Borrowings.objects.get(id=borrowing_id)
-
-    if request.GET.get("fine"):
-        type_payment = "FINE"
-        total_price = calculate_fine(borrowing)
-    else:
-        type_payment = "PAYMENT"
-        total_price = calculate_total_price(borrowing)
 
     checkout_session = stripe.checkout.Session.create(
         line_items=[
@@ -129,9 +125,70 @@ def stripe_payment(request, borrowing_id):
     )
     return redirect(checkout_session.url, code=303)
 
+def pay_payment(request, borrowing_id):
+    borrowing = Borrowings.objects.get(id=borrowing_id)
+    type_payment = "PAYMENT"
+    total_price = calculate_total_price(borrowing)
+    return create_checkout_session(request, borrowing, total_price, type_payment)
+
+
+@api_view()
+def renew_payment(request, borrowing_id):
+
+    try:
+        borrowing = Borrowings.objects.get(id=borrowing_id)
+    except Borrowings.DoesNotExist:
+        return Response(
+            {"detail": "Borrowing not found."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    if borrowing.payments.filter(type="PAYMENT", status="PENDING"):
+        return Response(
+            {"detail": "Your session is still active, you do not need to renew it"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    if borrowing.payments.filter(type="PAYMENT", status="PAID"):
+        return Response(
+            {"detail": "Your borrowing does not need payment"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    type_payment = "PAYMENT"
+    total_price = calculate_total_price(borrowing)
+    return create_checkout_session(request, borrowing, total_price, type_payment)
+
+
+@api_view()
+def fine_payment(request, borrowing_id):
+
+    try:
+        borrowing = Borrowings.objects.get(id=borrowing_id)
+    except Borrowings.DoesNotExist:
+        return Response(
+            {"detail": "Borrowing not found."}, status=status.HTTP_404_NOT_FOUND
+        )
+
+    if (not borrowing.actual_return_date or
+            borrowing.actual_return_date <= borrowing.expected_return_date):
+        return Response(
+            {"detail": "Your borrowing does not need payment of a fine"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    if borrowing.payments.filter(type="FINE", status="PAID"):
+        return Response(
+            {"detail": "Your borrowing does not need payment of a fine"},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    type_payment = "FINE"
+    total_price = calculate_fine(borrowing)
+    return create_checkout_session(request, borrowing, total_price, type_payment)
+
 
 @csrf_exempt
-@api_view(("POST",))
+@api_view(["POST"])
 def my_webhook_view(request):
     payload = request.body
     event = None

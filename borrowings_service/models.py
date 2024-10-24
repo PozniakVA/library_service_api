@@ -6,7 +6,7 @@ from books_service.models import Book
 
 class Borrowings(models.Model):
     borrow_date = models.DateTimeField(auto_now_add=True, editable=False)
-    expected_return_date = models.DateTimeField()
+    expected_return_date = models.DateTimeField() # TODO: add the restriction that the return date cannot beat in the past
     actual_return_date = models.DateTimeField(null=True, editable=False)
     book = models.ForeignKey(
         Book,
