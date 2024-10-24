@@ -43,11 +43,19 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
         return BorrowingsSerializer
 
     def create(self, request, *args, **kwargs):
+
+        if request.user.payments.filter(status="PENDING"):
+            return Response(
+                {"detail": "Pay previous borrowings first"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
         try:
             book = Book.objects.get(id=request.data["book"])
         except Book.DoesNotExist:
             return Response(
-                {"detail": "Book not found."}, status=status.HTTP_404_NOT_FOUND
+                {"detail": "Book not found."},
+                status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = self.get_serializer(data=request.data)
