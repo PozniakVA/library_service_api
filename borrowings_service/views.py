@@ -8,13 +8,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from books_service.models import Book
-from borrowings_service.models import Borrowings
+from borrowings_service.models import Borrowing
 from borrowings_service.serializer import (
-    BorrowingsSerializer,
-    BorrowingsDetailSerializer,
-    BorrowingsListSerializer,
-    BorrowingsCreateSerializer,
-    BorrowingsReturnSerializer,
+    BorrowingSerializer,
+    BorrowingDetailSerializer,
+    BorrowingListSerializer,
+    BorrowingCreateSerializer,
+    BorrowingReturnSerializer,
 )
 from notifications_service.tasks import (
     send_return_borrowing_success,
@@ -25,22 +25,22 @@ from notifications_service.tasks import (
 from payments_service.views import pay_payment
 
 
-class BorrowingsViewSet(viewsets.ModelViewSet):
-    queryset = Borrowings.objects.select_related()
+class BorrowingViewSet(viewsets.ModelViewSet):
+    queryset = Borrowing.objects.select_related()
     permission_classes = [IsAuthenticated]
 
     reminders = []
 
     def get_serializer_class(self):
         if self.action == "list":
-            return BorrowingsListSerializer
+            return BorrowingListSerializer
         if self.action == "retrieve":
-            return BorrowingsDetailSerializer
-        if self.action == "borrowings_return":
-            return BorrowingsReturnSerializer
+            return BorrowingDetailSerializer
+        if self.action == "borrowing_return":
+            return BorrowingReturnSerializer
         if self.action == "create":
-            return BorrowingsCreateSerializer
-        return BorrowingsSerializer
+            return BorrowingCreateSerializer
+        return BorrowingSerializer
 
     def create(self, request, *args, **kwargs):
 
@@ -116,7 +116,7 @@ class BorrowingsViewSet(viewsets.ModelViewSet):
         return queryset.order_by("expected_return_date")
 
     @action(detail=True, methods=["post"], url_path="return")
-    def borrowings_return(self, request, pk=None):
+    def borrowing_return(self, request, pk=None):
         borrowing = self.get_object()
 
         if not borrowing.actual_return_date:

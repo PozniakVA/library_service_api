@@ -1,13 +1,14 @@
 from rest_framework import serializers
 
-from payments_service.models import Payments
+from payments_service.models import Payment
 from users_service.serializer import UserSerializer
 
 
 class PaymentSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+
     class Meta:
-        model = Payments
+        model = Payment
         fields = [
             "id",
             "user",
@@ -24,8 +25,9 @@ class PaymentSerializer(serializers.ModelSerializer):
 
 class PaymentListSerializer(serializers.ModelSerializer):
     user = serializers.SlugRelatedField(slug_field="email", read_only=True)
+
     class Meta:
-        model = Payments
+        model = Payment
         fields = [
             "id",
             "user",
@@ -38,7 +40,7 @@ class PaymentListSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at"]
 
 
-class PaymentSerializerInBorrowings(serializers.ModelSerializer):
+class PaymentSerializerInBorrowing(serializers.ModelSerializer):
     class Meta:
-        model = Payments
+        model = Payment
         fields = ["id", "type", "status"]

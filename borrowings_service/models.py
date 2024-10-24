@@ -6,7 +6,7 @@ from books_service.models import Book
 from users_service.models import User
 
 
-class Borrowings(models.Model):
+class Borrowing(models.Model):
     borrow_date = models.DateTimeField(auto_now_add=True, editable=False)
     expected_return_date = models.DateTimeField()
     actual_return_date = models.DateTimeField(null=True, editable=False)
@@ -30,4 +30,8 @@ class Borrowings(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return f"{self.user.email} - {self.book.title} - {self.expected_return_date}"
+        return (
+            f"{self.user.email}"
+            f" - {self.book.title}"
+            f" - {self.expected_return_date}"
+        )

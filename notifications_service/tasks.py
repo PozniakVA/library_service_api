@@ -19,6 +19,7 @@ def reminder_to_return_the_book_in_one_day(user, book_title):
         f" that you planned to return the {book_title} in 24 hours",
     )
 
+
 @shared_task
 def reminder_to_return_the_book(user, book_title):
     chat = Chat.objects.get(user=user)
@@ -28,6 +29,7 @@ def reminder_to_return_the_book(user, book_title):
         f" that you planned to return the {book_title} today",
     )
 
+
 @shared_task
 def send_borrowing_success(user, book_title):
     chat = Chat.objects.get(user=user)
@@ -36,6 +38,7 @@ def send_borrowing_success(user, book_title):
         f"The book 📚{book_title}📚 has been borrowed successfully!"
     )
 
+
 @shared_task
 def send_return_borrowing_success(user, book_title):
     chat = Chat.objects.get(user=user)
@@ -43,6 +46,7 @@ def send_return_borrowing_success(user, book_title):
         chat.chat_id,
         f"The book 📚{book_title}📚 has been returned successfully!"
     )
+
 
 @shared_task
 def connect_telegram_user_with_user_from_db(message):
@@ -60,6 +64,7 @@ using the link in your personal profile on the website.
 """,
         )
 
+
 @shared_task
 def send_welcome_message(message):
     bot.send_message(
@@ -74,6 +79,7 @@ Here’s how I can help:
 """,
     )
 
+
 @shared_task
 def check_overdue_borrowing():
     overdue_borrowings = Borrowings.objects.filter(
@@ -81,6 +87,7 @@ def check_overdue_borrowing():
         actual_return_date__isnull=True
     )
     return overdue_borrowings
+
 
 @shared_task
 def send_notification_about_overdue_to_users():
@@ -90,9 +97,12 @@ def send_notification_about_overdue_to_users():
             chat = Chat.objects.get(user=borrowing.user)
             bot.send_message(
                 chat.chat_id,
-                f"Dear {chat.user.first_name}, the borrowing of your book '{borrowing.book.title}' is overdue"
-                f" as of {borrowing.expected_return_date}. Please don't forget to return the book."
+                f"Dear {chat.user.first_name}, the borrowing of your book "
+                f"'{borrowing.book.title}' is overdue"
+                f" as of {borrowing.expected_return_date}."
+                f" Please don't forget to return the book."
             )
+
 
 @shared_task
 def send_notification_about_overdue_to_admin():
@@ -102,8 +112,10 @@ def send_notification_about_overdue_to_admin():
         message = ""
         for borrowing in overdue_borrowings:
             text = (
-                f"{borrowing.user.email} overdue the book {borrowing.book.title} "
-                f"(The expected return date was {borrowing.expected_return_date})\n"
+                f"{borrowing.user.email} overdue the book "
+                f"{borrowing.book.title} "
+                f"(The expected return date was "
+                f"{borrowing.expected_return_date})\n"
             )
             message += text
 
@@ -119,6 +131,7 @@ def send_notification_about_overdue_to_admin():
             message
         )
 
+
 @shared_task
 def send_notification_about_successful_payment(chat_id):
     chat = Chat.objects.get(user=chat_id)
@@ -127,6 +140,7 @@ def send_notification_about_successful_payment(chat_id):
         "The payment was successful"
     )
 
+
 @shared_task
 def send_notification_about_expired_payment(chat_id):
     chat = Chat.objects.get(user=chat_id)
@@ -134,6 +148,7 @@ def send_notification_about_expired_payment(chat_id):
         chat.chat_id,
         "The payment expired"
     )
+
 
 @shared_task
 def checking_stripe_session_for_expiration():

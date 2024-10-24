@@ -11,13 +11,13 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from borrowings_service.models import Borrowings
+from borrowings_service.models import Borrowing
 from notifications_service.models import Chat
 from notifications_service.tasks import (
     send_notification_about_successful_payment,
     send_notification_about_expired_payment,
 )
-from payments_service.models import Payments
+from payments_service.models import Payment
 from payments_service.permissions import IsAdminUserOrIsAuthenticatedReadOnly
 from payments_service.serializer import (
     PaymentSerializer,
@@ -26,14 +26,14 @@ from payments_service.serializer import (
 from users_service.models import User
 
 
-class PaymentsViewSet(
+class PaymentViewSet(
     mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
     mixins.UpdateModelMixin,
     GenericViewSet,
 ):
     permission_classes = [IsAdminUserOrIsAuthenticatedReadOnly]
-    queryset = Payments.objects.all()
+    queryset = Payment.objects.all()
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -115,7 +115,7 @@ def create_checkout_session(
             "book_title": borrowing.book.title,
         },
     )
-    Payments.objects.create(
+    Payment.objects.create(
         user=request.user,
         borrowing=borrowing,
         session_id=checkout_session.id,
@@ -126,26 +126,36 @@ def create_checkout_session(
     )
     return redirect(checkout_session.url, code=303)
 
+
 def pay_payment(request, borrowing_id):
-    borrowing = Borrowings.objects.get(id=borrowing_id)
+    borrowing = Borrowing.objects.get(id=borrowing_id)
     type_payment = "PAYMENT"
     total_price = calculate_total_price(borrowing)
-    return create_checkout_session(request, borrowing, total_price, type_payment)
+    return create_checkout_session(
+        request,
+        borrowing,
+        total_price,
+        type_payment
+    )
 
 
 @api_view()
 def renew_payment(request, borrowing_id):
 
     try:
-        borrowing = Borrowings.objects.get(id=borrowing_id)
-    except Borrowings.DoesNotExist:
+        borrowing = Borrowing.objects.get(id=borrowing_id)
+    except Borrowing.DoesNotExist:
         return Response(
-            {"detail": "Borrowing not found."}, status=status.HTTP_404_NOT_FOUND
+            {"detail": "Borrowing not found."},
+            status=status.HTTP_404_NOT_FOUND
         )
 
     if borrowing.payments.filter(type="PAYMENT", status="PENDING"):
         return Response(
-            {"detail": "Your session is still active, you do not need to renew it"},
+            {
+                "detail":
+                    "Your session is still active, you do not need to renew it"
+            },
             status=status.HTTP_404_NOT_FOUND
         )
 
@@ -157,17 +167,23 @@ def renew_payment(request, borrowing_id):
 
     type_payment = "PAYMENT"
     total_price = calculate_total_price(borrowing)
-    return create_checkout_session(request, borrowing, total_price, type_payment)
+    return create_checkout_session(
+        request,
+        borrowing,
+        total_price,
+        type_payment
+    )
 
 
 @api_view()
 def fine_payment(request, borrowing_id):
 
     try:
-        borrowing = Borrowings.objects.get(id=borrowing_id)
-    except Borrowings.DoesNotExist:
+        borrowing = Borrowing.objects.get(id=borrowing_id)
+    except Borrowing.DoesNotExist:
         return Response(
-            {"detail": "Borrowing not found."}, status=status.HTTP_404_NOT_FOUND
+            {"detail": "Borrowing not found."},
+            status=status.HTTP_404_NOT_FOUND
         )
 
     if (not borrowing.actual_return_date or
@@ -185,7 +201,12 @@ def fine_payment(request, borrowing_id):
 
     type_payment = "FINE"
     total_price = calculate_fine(borrowing)
-    return create_checkout_session(request, borrowing, total_price, type_payment)
+    return create_checkout_session(
+        request,
+        borrowing,
+        total_price,
+        type_payment
+    )
 
 
 @csrf_exempt
@@ -211,8 +232,8 @@ def my_webhook_view(request):
         borrowing_id = int(session.metadata.get("borrowing_id"))
         type_payment = session.metadata.get("type_payment")
 
-        borrowing = Borrowings.objects.get(id=borrowing_id)
-        payment = Payments.objects.get(
+        borrowing = Borrowing.objects.get(id=borrowing_id)
+        payment = Payment.objects.get(
             borrowing__id=borrowing_id,
             type=type_payment
         )

@@ -1,9 +1,9 @@
 from rest_framework import routers
 
-from borrowings_service.views import BorrowingsViewSet
+from borrowings_service.views import BorrowingViewSet
 
 router = routers.DefaultRouter()
-router.register("", BorrowingsViewSet)
+router.register("", BorrowingViewSet)
 
 urlpatterns = router.urls
 

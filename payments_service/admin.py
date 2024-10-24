@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-from payments_service.models import Payments
+from payments_service.models import Payment
 
 
-@admin.register(Payments)
-class BorrowingsAdmin(admin.ModelAdmin):
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
     pass

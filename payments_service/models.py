@@ -1,10 +1,10 @@
 from django.db import models
 
-from borrowings_service.models import Borrowings
+from borrowings_service.models import Borrowing
 from users_service.models import User
 
 
-class Payments(models.Model):
+class Payment(models.Model):
     class Status(models.TextChoices):
         PENDING = "PENDING"
         PAID = "PAID"
@@ -15,7 +15,7 @@ class Payments(models.Model):
         FINE = "FINE"
 
     borrowing = models.ForeignKey(
-        Borrowings, on_delete=models.CASCADE, related_name="payments"
+        Borrowing, on_delete=models.CASCADE, related_name="payments"
     )
     user = models.ForeignKey(
         User,

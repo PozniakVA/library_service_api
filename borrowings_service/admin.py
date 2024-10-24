@@ -1,8 +1,8 @@
 from django.contrib import admin
 
-from borrowings_service.models import Borrowings
+from borrowings_service.models import Borrowing
 
 
-@admin.register(Borrowings)
-class BorrowingsAdmin(admin.ModelAdmin):
+@admin.register(Borrowing)
+class BorrowingAdmin(admin.ModelAdmin):
     pass

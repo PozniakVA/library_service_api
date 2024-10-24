@@ -2,10 +2,10 @@ from django.urls import path, include
 from rest_framework import routers
 
 from payments_service import views
-from payments_service.views import PaymentsViewSet
+from payments_service.views import PaymentViewSet
 
 router = routers.DefaultRouter()
-router.register("payments", PaymentsViewSet, basename="payments")
+router.register("payments", PaymentViewSet, basename="payments")
 urlpatterns = [
     path("", include(router.urls)),
     path("webhook/", views.my_webhook_view, name="stripe-webhook"),

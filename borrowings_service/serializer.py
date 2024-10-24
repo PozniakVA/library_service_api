@@ -1,14 +1,17 @@
 from rest_framework import serializers
 
 from books_service.serializer import BookSerializer
-from borrowings_service.models import Borrowings
-from payments_service.serializer import PaymentListSerializer, PaymentSerializerInBorrowings
+from borrowings_service.models import Borrowing
+from payments_service.serializer import (
+    PaymentListSerializer,
+    PaymentSerializerInBorrowing
+)
 from users_service.serializer import UserSerializer
 
 
-class BorrowingsSerializer(serializers.ModelSerializer):
+class BorrowingSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Borrowings
+        model = Borrowing
         fields = [
             "id",
             "borrow_date",
@@ -20,12 +23,12 @@ class BorrowingsSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "user", "borrow_date", "actual_return_date"]
 
 
-class BorrowingsListSerializer(BorrowingsSerializer):
+class BorrowingListSerializer(BorrowingSerializer):
     book = serializers.SlugRelatedField(slug_field="title", read_only=True)
     user = serializers.SlugRelatedField(slug_field="email", read_only=True)
-    payments = PaymentSerializerInBorrowings(many=True, read_only=True)
+    payments = PaymentSerializerInBorrowing(many=True, read_only=True)
 
-    class Meta(BorrowingsSerializer.Meta):
+    class Meta(BorrowingSerializer.Meta):
         fields = [
             "id",
             "borrow_date",
@@ -37,22 +40,22 @@ class BorrowingsListSerializer(BorrowingsSerializer):
         ]
 
 
-class BorrowingsDetailSerializer(BorrowingsSerializer):
+class BorrowingDetailSerializer(BorrowingSerializer):
     payments = PaymentListSerializer(many=True, read_only=True)
     book = BookSerializer(read_only=True)
     user = UserSerializer(read_only=True)
 
-    class Meta(BorrowingsSerializer.Meta):
-        fields = BorrowingsSerializer.Meta.fields
+    class Meta(BorrowingSerializer.Meta):
+        fields = BorrowingSerializer.Meta.fields
 
 
-class BorrowingsCreateSerializer(serializers.ModelSerializer):
+class BorrowingCreateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Borrowings
+        model = Borrowing
         fields = ["expected_return_date", "book"]
 
 
-class BorrowingsReturnSerializer(serializers.ModelSerializer):
+class BorrowingReturnSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Borrowings
+        model = Borrowing
         fields = []
