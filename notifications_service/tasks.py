@@ -3,11 +3,11 @@ from celery import shared_task
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from borrowings_service.models import Borrowings
+from borrowings_service.models import Borrowing
 from library_service_api import settings
 from notifications_service.bot_init import bot
 from notifications_service.models import Chat
-from payments_service.models import Payments
+from payments_service.models import Payment
 
 
 @shared_task
@@ -82,7 +82,7 @@ Here’s how I can help:
 
 @shared_task
 def check_overdue_borrowing():
-    overdue_borrowings = Borrowings.objects.filter(
+    overdue_borrowings = Borrowing.objects.filter(
         expected_return_date__lt=timezone.now(),
         actual_return_date__isnull=True
     )
@@ -157,8 +157,8 @@ def checking_stripe_session_for_expiration():
 
     for expire in expires:
         try:
-            payment = Payments.objects.get(session_id=expire.id)
+            payment = Payment.objects.get(session_id=expire.id)
             payment.status = "EXPIRED"
             payment.save()
-        except Payments.DoesNotExist:
+        except Payment.DoesNotExist:
             pass

@@ -156,13 +156,13 @@ def renew_payment(request, borrowing_id):
                 "detail":
                     "Your session is still active, you do not need to renew it"
             },
-            status=status.HTTP_404_NOT_FOUND
+            status=status.HTTP_400_BAD_REQUEST
         )
 
     if borrowing.payments.filter(type="PAYMENT", status="PAID"):
         return Response(
             {"detail": "Your borrowing does not need payment"},
-            status=status.HTTP_404_NOT_FOUND
+            status=status.HTTP_400_BAD_REQUEST
         )
 
     type_payment = "PAYMENT"
@@ -190,13 +190,13 @@ def fine_payment(request, borrowing_id):
             borrowing.actual_return_date <= borrowing.expected_return_date):
         return Response(
             {"detail": "Your borrowing does not need payment of a fine"},
-            status=status.HTTP_404_NOT_FOUND
+            status=status.HTTP_400_BAD_REQUEST
         )
 
     if borrowing.payments.filter(type="FINE", status="PAID"):
         return Response(
             {"detail": "Your borrowing does not need payment of a fine"},
-            status=status.HTTP_404_NOT_FOUND
+            status=status.HTTP_400_BAD_REQUEST
         )
 
     type_payment = "FINE"
@@ -212,9 +212,9 @@ def fine_payment(request, borrowing_id):
 @csrf_exempt
 @api_view(["POST"])
 def my_webhook_view(request):
+
     payload = request.body
     event = None
-
     try:
         event = stripe.Event.construct_from(
             json.loads(payload),
