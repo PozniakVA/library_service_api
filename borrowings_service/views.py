@@ -47,7 +47,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
         if request.user.payments.filter(status="PENDING"):
             return Response(
                 {"detail": "Pay previous borrowings first"},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
@@ -58,6 +58,12 @@ class BorrowingViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        if book.inventory < 1:
+            return Response(
+                {"detail": "The copies of this book are not available."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -65,36 +71,30 @@ class BorrowingViewSet(viewsets.ModelViewSet):
 
         borrowing = serializer.instance
 
-        if book.inventory > 0:
-            book.inventory -= 1
-            book.save()
+        book.inventory -= 1
+        book.save()
 
-            send_borrowing_success.delay(request.user.id, borrowing.book.title)
+        send_borrowing_success.delay(request.user.id, borrowing.book.title)
 
-            expected_date = borrowing.expected_return_date
-            before_expected_date = expected_date - timedelta(days=1)
-            if before_expected_date >= timezone.now():
-                reminder_in_advance = (
-                    reminder_to_return_the_book_in_one_day.apply_async(
-                        (request.user.id, borrowing.book.title),
-                        eta=before_expected_date,
-                    )
+        expected_date = borrowing.expected_return_date
+        before_expected_date = expected_date - timedelta(days=1)
+        if before_expected_date >= timezone.now():
+            reminder_in_advance = (
+                reminder_to_return_the_book_in_one_day.apply_async(
+                    (request.user.id, borrowing.book.title),
+                    eta=before_expected_date,
                 )
-                self.reminders.append(reminder_in_advance)
-
-            reminder_at_the_end = reminder_to_return_the_book.apply_async(
-                (request.user.id, borrowing.book.title),
-                eta=expected_date,
             )
+            self.reminders.append(reminder_in_advance)
 
-            self.reminders.append(reminder_at_the_end)
-
-            return pay_payment(request, serializer.instance.id)
-
-        return Response(
-            {"detail": "The copies of this book are not available."},
-            status=status.HTTP_400_BAD_REQUEST,
+        reminder_at_the_end = reminder_to_return_the_book.apply_async(
+            (request.user.id, borrowing.book.title),
+            eta=expected_date,
         )
+
+        self.reminders.append(reminder_at_the_end)
+
+        return pay_payment(request, serializer.instance.id)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -113,7 +113,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
         if user_id and self.request.user.is_staff:
             queryset = queryset.filter(user__id=int(user_id))
 
-        return queryset.order_by("expected_return_date")
+        return queryset.order_by("borrow_date")
 
     @action(detail=True, methods=["post"], url_path="return")
     def borrowing_return(self, request, pk=None):
