@@ -1,5 +1,10 @@
 # Library Service API
 
+## Start Redis
+```bash
+docker run -d -p 6379:6379 redis
+```
+
 ## Starting Celery Worker
 
 To start Celery worker, use the command:
