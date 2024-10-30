@@ -22,11 +22,16 @@ set PYTHONPATH=your_path
 
 python bot_launch.py
 ```
+## Start Stripe
+
+1) Create account: https://dashboard.stripe.com/
+2) Set your STRIPE_PUBLIC_KEY, STRIPE_SECRET_KEY
+3) Create your webhook endpoint in Stripe
+
 
 ## Test webhook
 If you want to test the webhook locally,
 you need to use ngrok. Ngrok allows you 
 to expose your local server via a public URL
-```
+
 https://ngrok.com/docs/getting-started/#step-1-install
-```
