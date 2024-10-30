@@ -37,7 +37,7 @@ class PaymentViewSet(
     GenericViewSet,
 ):
     permission_classes = [IsAdminUserOrIsAuthenticatedReadOnly]
-    queryset = Payment.objects.all()
+    queryset = Payment.objects.select_related()
 
     def get_serializer_class(self):
         if self.action == "list":
