@@ -6,6 +6,7 @@ from django.conf import settings
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
+from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -139,6 +140,21 @@ def pay_payment(request, borrowing_id):
     )
 
 
+@extend_schema(
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "Borrowing not found."},
+        status.HTTP_400_BAD_REQUEST: {
+            "description":
+                "Your session is still active, you do not"
+                " need to renew it OR Your borrowing does not need payment",
+        },
+        status.HTTP_302_FOUND: {
+            "description": "Redirects to the payment page(Stripe)."
+        },
+    },
+    description="Resumes the payment checkout"
+                " session so that the user can pay",
+)
 @api_view()
 def renew_payment(request, borrowing_id):
 
@@ -175,6 +191,19 @@ def renew_payment(request, borrowing_id):
     )
 
 
+@extend_schema(
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "Borrowing not found."},
+        status.HTTP_400_BAD_REQUEST: {
+            "description":
+                "Your borrowing does not need payment of a fine",
+        },
+        status.HTTP_302_FOUND: {
+            "description": "Redirects to the payment page(Stripe)."
+        },
+    },
+    description="Create a new checkout session to pay the fine",
+)
 @api_view()
 def fine_payment(request, borrowing_id):
 
@@ -209,6 +238,11 @@ def fine_payment(request, borrowing_id):
     )
 
 
+@extend_schema(
+    description="The endpoint is created to listen for "
+                "responses from Stripe after payment, the"
+                " user does not need to communicate with it",
+)
 @csrf_exempt
 @api_view(["POST"])
 def my_webhook_view(request):

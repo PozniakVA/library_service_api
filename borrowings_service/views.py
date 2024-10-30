@@ -2,6 +2,8 @@ from datetime import timedelta
 
 from django.shortcuts import render
 from django.utils import timezone
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -104,7 +106,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
         is_active = self.request.query_params.get("is_active")
         user_id = self.request.query_params.get("user_id")
 
-        option = {"True": True, "False": False}
+        option = {"true": True, "false": False}
         if is_active in option:
             queryset = queryset.filter(
                 actual_return_date__isnull=option[is_active]
@@ -115,6 +117,19 @@ class BorrowingViewSet(viewsets.ModelViewSet):
 
         return queryset.order_by("borrow_date")
 
+    @extend_schema(
+        request=BorrowingReturnSerializer,
+        responses={
+            status.HTTP_200_OK: {"description": "Book returned successfully!"},
+            status.HTTP_400_BAD_REQUEST: {
+                "description": "Book already returned!"
+            },
+        },
+        description="Action that returns the books,"
+                    " сan also render the fine payment page"
+                    " if the book is returned late than expected",
+        methods=["POST"]
+    )
     @action(detail=True, methods=["post"], url_path="return")
     def borrowing_return(self, request, pk=None):
         borrowing = self.get_object()
@@ -149,3 +164,22 @@ class BorrowingViewSet(viewsets.ModelViewSet):
             {"message": "Book already returned!"},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="is_active",
+                type=OpenApiTypes.BOOL,
+                description="Filter by actual_return_date "
+                            "(ex. ?is_active=True)",
+            ),
+            OpenApiParameter(
+                name="user_id",
+                type=OpenApiTypes.INT,
+                description="Filter by user_id (ex. ?user_id=7),"
+                            " only for admin",
+            )
+        ]
+    )
+    def list(self, request):
+        return super().list(request)

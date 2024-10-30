@@ -46,7 +46,7 @@ class BorrowingDetailSerializer(BorrowingSerializer):
     user = UserSerializer(read_only=True)
 
     class Meta(BorrowingSerializer.Meta):
-        fields = BorrowingSerializer.Meta.fields
+        fields = BorrowingListSerializer.Meta.fields
 
 
 class BorrowingCreateSerializer(serializers.ModelSerializer):
