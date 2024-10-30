@@ -22,6 +22,7 @@ app.autodiscover_tasks()
 def debug_task(self):
     print(f"Request: {self.request!r}")
 
+
 app.conf.beat_schedule = {
     "Send notification about overdue to admin every minute": {
         "task": "notifications_service.tasks.send_notification_about_overdue_to_admin",

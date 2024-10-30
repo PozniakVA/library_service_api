@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
@@ -19,7 +19,10 @@ from notifications_service.tasks import (
     send_notification_about_expired_payment,
 )
 from payments_service.models import Payment
-from payments_service.permissions import IsAdminUserOrIsAuthenticatedReadOnly
+from payments_service.permissions import (
+    IsAdminUserOrIsAuthenticatedReadOnly,
+    IsAdminUserOnly,
+)
 from payments_service.serializer import (
     PaymentSerializer,
     PaymentListSerializer,
@@ -245,6 +248,7 @@ def fine_payment(request, borrowing_id):
 )
 @csrf_exempt
 @api_view(["POST"])
+@permission_classes([IsAdminUserOnly])
 def my_webhook_view(request):
 
     payload = request.body

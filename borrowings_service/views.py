@@ -29,7 +29,6 @@ from payments_service.views import pay_payment
 
 class BorrowingViewSet(viewsets.ModelViewSet):
     queryset = Borrowing.objects.select_related()
-    permission_classes = [IsAuthenticated]
 
     reminders = []
 
