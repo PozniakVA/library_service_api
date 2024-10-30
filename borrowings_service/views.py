@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.db import transaction
 from django.shortcuts import render
 from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
@@ -43,6 +44,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
             return BorrowingCreateSerializer
         return BorrowingSerializer
 
+    @transaction.atomic
     def create(self, request, *args, **kwargs):
 
         if request.user.payments.filter(status="PENDING"):
