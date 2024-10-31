@@ -18,6 +18,95 @@ def detail_url(endpoint, object_id):
     return reverse(f"payments_service:{endpoint}", args=[object_id])
 
 
+class WebhookTest(TestCase):
+
+    def setUp(self) -> None:
+        self.client = APIClient()
+        self.webhook_url = reverse("payments_service:stripe-webhook")
+
+        self.user = get_user_model().objects.create_user(
+            email="test@gmail.com",
+            password="test12345",
+        )
+        self.client.force_authenticate(user=self.user)
+
+        book = Book.objects.create(
+            title="Test Book",
+            inventory=100,
+            daily_fee=5
+        )
+
+        self.borrowing = Borrowing.objects.create(
+            expected_return_date=timezone.now() + timedelta(days=3),
+            book=book,
+            user=self.user,
+        )
+
+        self.chat = Chat.objects.create(
+            user=self.user,
+            chat_id=5
+        )
+
+        self.payment = Payment.objects.create(
+            borrowing=self.borrowing,
+            user=self.user,
+            session_id="session_id",
+            session_url="https://session_url",
+            status="PENDING",
+            type="PAYMENT",
+            total_price=10,
+        )
+
+        self.payload = {
+            "type": "",
+            "data": {
+                "object": {
+                    "metadata": {
+                        "borrowing_id": self.borrowing.id,
+                        "type_payment": "PAYMENT",
+                        "email": self.user.email,
+                    }
+                }
+            }
+        }
+
+    @patch(
+        "payments_service.views.send_notification_about_successful_payment.delay"
+    )
+    def test_checkout_session_completed_success(
+            self,
+            mock_send_notification
+    ) -> None:
+
+        self.payload["type"] = "checkout.session.completed"
+        response = self.client.post(
+            self.webhook_url,
+            data=self.payload,
+            format="json"
+        )
+
+        payment = Payment.objects.get(borrowing__id=self.borrowing.id)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(payment.status, "PAID")
+        mock_send_notification.assert_called_once_with(self.chat.id)
+
+    @patch(
+        "payments_service.views.send_notification_about_expired_payment.delay"
+    )
+    def test_checkout_session_expired(self, mock_send_notification) -> None:
+
+        self.payload["type"] = "checkout.session.expired"
+        response = self.client.post(
+            self.webhook_url,
+            data=self.payload,
+            format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_send_notification.assert_called_once_with(self.chat.id)
+
+
 class RenewPaymentsTest(TestCase):
 
     def setUp(self) -> None:
@@ -170,95 +259,6 @@ class FinePaymentsTest(TestCase):
 
         response = self.client.get(detail_url("fine_payment", borrowing.id))
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
-
-
-class WebhookTest(TestCase):
-
-    def setUp(self) -> None:
-        self.client = APIClient()
-        self.webhook_url = reverse("payments_service:stripe-webhook")
-
-        self.user = get_user_model().objects.create_user(
-            email="test@gmail.com",
-            password="test12345",
-        )
-        self.client.force_authenticate(user=self.user)
-
-        book = Book.objects.create(
-            title="Test Book",
-            inventory=100,
-            daily_fee=5
-        )
-
-        self.borrowing = Borrowing.objects.create(
-            expected_return_date=timezone.now() + timedelta(days=3),
-            book=book,
-            user=self.user,
-        )
-
-        self.chat = Chat.objects.create(
-            user=self.user,
-            chat_id=5
-        )
-
-        self.payment = Payment.objects.create(
-            borrowing=self.borrowing,
-            user=self.user,
-            session_id="session_id",
-            session_url="https://session_url",
-            status="PENDING",
-            type="PAYMENT",
-            total_price=10,
-        )
-
-        self.payload = {
-            "type": "",
-            "data": {
-                "object": {
-                    "metadata": {
-                        "borrowing_id": self.borrowing.id,
-                        "type_payment": "PAYMENT",
-                        "email": self.user.email,
-                    }
-                }
-            }
-        }
-
-    @patch(
-        "payments_service.views.send_notification_about_successful_payment.delay"
-    )
-    def test_checkout_session_completed_success(
-            self,
-            mock_send_notification
-    ) -> None:
-
-        self.payload["type"] = "checkout.session.completed"
-        response = self.client.post(
-            self.webhook_url,
-            data=self.payload,
-            format="json"
-        )
-
-        payment = Payment.objects.get(id=self.borrowing.id)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(payment.status, "PAID")
-        mock_send_notification.assert_called_once_with(self.chat.id)
-
-    @patch(
-        "payments_service.views.send_notification_about_expired_payment.delay"
-    )
-    def test_checkout_session_expired(self, mock_send_notification) -> None:
-
-        self.payload["type"] = "checkout.session.expired"
-        response = self.client.post(
-            self.webhook_url,
-            data=self.payload,
-            format="json"
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        mock_send_notification.assert_called_once_with(self.chat.id)
 
 
 class PaymentViewSetTest(TestCase):

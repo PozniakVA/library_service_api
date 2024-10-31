@@ -172,7 +172,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
                 name="is_active",
                 type=OpenApiTypes.BOOL,
                 description="Filter by actual_return_date "
-                            "(ex. ?is_active=True)",
+                            "(ex. ?is_active=true)",
             ),
             OpenApiParameter(
                 name="user_id",

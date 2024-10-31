@@ -259,7 +259,7 @@ class TestBorrowing(TestCase):
 
         response = self.client.get(
             reverse("borrowings_service:borrowing-list"),
-            {"is_active": "True"}
+            {"is_active": "true"}
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
