@@ -24,11 +24,11 @@ def debug_task(self):
 
 
 app.conf.beat_schedule = {
-    "Send notification about overdue to admin every minute": {
+    "Send notification about overdue to admin every day at noon": {
         "task": "notifications_service.tasks.send_notification_about_overdue_to_admin",
         "schedule": crontab(hour="12", minute="0"),
     },
-    "Send notification about overdue to users every minute": {
+    "Send notification about overdue to users every every day at noon": {
         "task": "notifications_service.tasks.send_notification_about_overdue_to_users",
         "schedule": crontab(hour="12", minute="0"),
     },

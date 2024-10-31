@@ -22,8 +22,8 @@ class Payment(models.Model):
         on_delete=models.CASCADE,
         related_name="payments"
     )
-    session_id = models.CharField(max_length=400)
-    session_url = models.URLField()
+    session_id = models.CharField(max_length=500)
+    session_url = models.URLField(max_length=500)
     status = models.CharField(
         max_length=100, choices=Status.choices, default=Status.PENDING
     )
