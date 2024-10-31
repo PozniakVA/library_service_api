@@ -22,13 +22,13 @@ class Borrowing(models.Model):
     )
 
     def clean(self):
+        if not self.borrow_date:
+            self.borrow_date = timezone.now()
+
         if self.expected_return_date < self.borrow_date:
             raise ValidationError("Expected return date cannot be in the past")
 
     def save(self, *args, **kwargs):
-        if not self.borrow_date:
-            self.borrow_date = timezone.now()
-
         self.clean()
         super().save(*args, **kwargs)
 
