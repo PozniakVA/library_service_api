@@ -184,7 +184,8 @@ STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Social Media API",
-    "DESCRIPTION": "Share photos, subscribe to profiles and share your emotions in the comments",
+    "DESCRIPTION": "Share photos, subscribe to profiles"
+                   " and share your emotions in the comments",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "SWAGGER_UI_SETTINGS": {
