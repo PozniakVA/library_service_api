@@ -2,6 +2,7 @@ import stripe
 from celery import shared_task
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from rest_framework.generics import get_object_or_404
 
 from borrowings_service.models import Borrowing
 from library_service_api import settings
@@ -156,9 +157,6 @@ def checking_stripe_session_for_expiration():
     expires = stripe.checkout.Session.list(status="expired")
 
     for expire in expires:
-        try:
-            payment = Payment.objects.get(session_id=expire.id)
-            payment.status = "EXPIRED"
-            payment.save()
-        except Payment.DoesNotExist:
-            pass
+        payment = get_object_or_404(Payment, session_id=expire.id)
+        payment.status = "EXPIRED"
+        payment.save()

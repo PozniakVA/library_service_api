@@ -7,6 +7,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
 from books_service.models import Book
@@ -52,13 +53,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        try:
-            book = Book.objects.get(id=request.data["book"])
-        except Book.DoesNotExist:
-            return Response(
-                {"detail": "Book not found."},
-                status=status.HTTP_404_NOT_FOUND
-            )
+        book = get_object_or_404(Book, id=request.data["book"])
 
         if book.inventory < 1:
             return Response(

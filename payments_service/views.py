@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
@@ -161,13 +162,7 @@ def pay_payment(request, borrowing_id):
 @api_view()
 def renew_payment(request, borrowing_id):
 
-    try:
-        borrowing = Borrowing.objects.get(id=borrowing_id)
-    except Borrowing.DoesNotExist:
-        return Response(
-            {"detail": "Borrowing not found."},
-            status=status.HTTP_404_NOT_FOUND
-        )
+    borrowing = get_object_or_404(Borrowing, id=borrowing_id)
 
     if borrowing.payments.filter(type="PAYMENT", status="PENDING"):
         return Response(
@@ -210,13 +205,7 @@ def renew_payment(request, borrowing_id):
 @api_view()
 def fine_payment(request, borrowing_id):
 
-    try:
-        borrowing = Borrowing.objects.get(id=borrowing_id)
-    except Borrowing.DoesNotExist:
-        return Response(
-            {"detail": "Borrowing not found."},
-            status=status.HTTP_404_NOT_FOUND
-        )
+    borrowing = get_object_or_404(Borrowing, id=borrowing_id)
 
     if (not borrowing.actual_return_date or
             borrowing.actual_return_date <= borrowing.expected_return_date):
@@ -279,11 +268,8 @@ def my_webhook_view(request):
         payment.status = "PAID"
         payment.save()
 
-        try:
-            chat = Chat.objects.get(user=borrowing.user)
-            send_notification_about_successful_payment.delay(chat.id)
-        except Chat.DoesNotExist:
-            pass
+        chat = get_object_or_404(Chat, user=borrowing.user)
+        send_notification_about_successful_payment.delay(chat.id)
 
         return Response(
             {"detail": "Payment is successful!"},
@@ -294,11 +280,8 @@ def my_webhook_view(request):
         email = session.metadata.get("email")
         user = User.objects.get(email=email)
 
-        try:
-            chat = Chat.objects.get(user=user)
-            send_notification_about_expired_payment.delay(chat.id)
-        except Chat.DoesNotExist:
-            pass
+        chat = get_object_or_404(Chat, user=user)
+        send_notification_about_expired_payment.delay(chat.id)
 
         return Response(
             {"detail": "The payment expired!"},
