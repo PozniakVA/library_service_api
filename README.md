@@ -3,53 +3,24 @@
 ## 1) Set up .env
 Set your variables in .env.example and rename it to .env
 
-## 2) Start Postgres
+## 2) Start Stripe
+
+1) Create account: https://dashboard.stripe.com/
+2) Create your webhook endpoint in Stripe
+
+
+## 3) Start Project
 ```bash
-docker-compose up -d
+docker-compose build
 ```
 ```bash
-python manage.py makemigrations
-```
-```bash
-python manage.py migrate
+docker-compose up
 ```
 
-## 3) Start Redis
-```bash
-docker run -d -p 6379:6379 redis
-```
-
-## 4) Starting Celery Worker
-
-To start Celery worker, use the command:
-
-```bash
-celery -A library_service_api worker --pool=solo --loglevel=info
-```
-
-## 5) Start the celery beat service
-
-```bash
-celery -A library_service_api beat --loglevel=info
-```
-
-## 6) Launch of Telegram Bot
-To start the Telegram bot, set the PYTHONPATH environment variable and execute the startup file:
-
-```bash
-set PYTHONPATH=your_path
-```
-```bash
-python bot_launch.py
-```
+## 4) Notifications
 
 To receive notifications and reminders, visit your personal page(**api/users/me**) and follow the link to connect with the Telegram bot.
 
-## 7) Start Stripe
-
-1) Create account: https://dashboard.stripe.com/
-2) Set your STRIPE_PUBLIC_KEY, STRIPE_SECRET_KEY
-3) Create your webhook endpoint in Stripe
 
 # Additional information
 

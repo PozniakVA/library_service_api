@@ -1,6 +1,19 @@
 version: "3.9"
 
 services:
+  backend:
+    build:
+      context: .
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "python manage.py wait_for_db &&
+      python manage.py migrate &&
+      python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - db
 
   db:
     image: postgres:16.0
@@ -11,12 +24,37 @@ services:
     volumes:
       - postgres_data:$PGDATA
 
-    environment:
-      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
-      POSTGRES_USER: $POSTGRES_USER
-      POSTGRES_DB: $POSTGRES_DB
-      POSTGRES_HOST: $POSTGRES_HOST
-      POSTGRES_PORT: $POSTGRES_PORT
+    env_file:
+      - .env
+
+  redis:
+    image: redis:7.2.6-alpine3.20
+    restart: always
+
+  celery_worker:
+    build:
+      context: .
+    command: celery -A library_service_api worker --pool=solo --loglevel=info
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+
+  celery_beat:
+    build:
+      context: .
+    command: celery -A library_service_api beat --loglevel=info
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+
+  telegram_bot:
+    build:
+      context: .
+    command: python manage.py launch_telegram_bot
 
 volumes:
   postgres_data:
