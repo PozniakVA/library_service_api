@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cancel</title>
+</head>
+<body>
+  <h1>Cancel!</h1>
+  <h3>Dear {% if customer.first_name %}{{ customer.first_name }}{% else %}{{ customer.email }}{% endif %} your payment has been cancelled</h3>
+  <h3>The payment can be paid a little later (but the session is only available for 24 hours)</h3>
+</body>
+</html>
